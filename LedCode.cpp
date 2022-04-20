@@ -6,14 +6,9 @@ PwmOut red(p21); // led out on pin 21 - blue
 PwmOut green(p22); // led out on pin 22 - green
 PwmOut blue(p23); // led out on pin 23 - red
 
-PinDetect change_state_but(p20); //push button in on pin 20
-
-Serial pc(USBTX, USBRX);
-
 //---------------------------------------------------------------------------------------------------
 
 Thread led_thread;
-Thread button_thread;
 Mutex led_mutex;
 DigitalOut led1(LED1);
 
@@ -27,8 +22,6 @@ state 3 = clothes done (waiting for user to return)
 float red_v = 0.0f;
 float green_v = 1.0f;
 float blue_v = 0.0f;
-
-float p = 0.0f; 
 
 
 void set_led_color(int state_in) {
@@ -79,21 +72,9 @@ void set_led_color(int state_in) {
 
 void change_state (void) {
     
-    //state = new_state;
-    
-           
-    while(1) {
-        Thread::wait(4000);
-        if (state < 3) {
-            state++;
-        }
-        else {
-            state = 0;
-        }
+    state = new_state;
+	set_led_color(state);
         
-        set_led_color(state);
-    }
-    
 }
 
 void led_thread_func (void) {
@@ -119,18 +100,9 @@ void led_thread_func (void) {
 }
 
 int main(){ 
-    //setup push buttons    
-    change_state_but.mode(PullUp); 
-        
-    // Delay for initial pullup to take effect    
-    wait(.01);
-    
-    //change_state_but.attach_deasserted(&change_state_callback);
-    // Start sampling pb input using interrupts
-    //change_state_but.setSampleFrequency();
+   
   
     led_thread.start(led_thread_func);
-    button_thread.start(change_state);
     
     while (true) {
         //led1 = !led1;
