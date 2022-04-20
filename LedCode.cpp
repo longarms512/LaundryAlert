@@ -70,7 +70,7 @@ void set_led_color(int state_in) {
     pc.printf("blue_v = %f\n\r", blue_v);
 }
 
-void change_state (void) {
+void change_state (int new_state) {
     
     state = new_state;
 	set_led_color(state);
