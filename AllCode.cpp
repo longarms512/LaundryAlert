@@ -43,66 +43,17 @@ float red_v = 0.0f;
 float green_v = 1.0f;
 float blue_v = 0.0f;
 
-void set_led_color(int state_in) {
-    if (state_in == 0) {
-        led_mutex.lock();
-        red_v = 0.0f;
-        green_v = 1.0f;
-        blue_v = 0.0f;
-        led_mutex.unlock();
-    }
-   
-    else if (state_in == 1) {
-        led_mutex.lock();
-        red_v = 0.0f;
-        green_v = 0.0f;
-        blue_v = 1.0f;
-        led_mutex.unlock();
-    }
-   
-    else if (state_in == 2) {
-        led_mutex.lock();
-        red_v = 1.0f;
-        green_v = 0.0f;
-        blue_v = 0.0f;
-        led_mutex.unlock();
-    }
-   
-    else if (state_in == 3) {
-        led_mutex.lock();
-        red_v = 1.0f;
-        green_v = 0.8f;
-        blue_v = 0.0f;
-        led_mutex.unlock();
-    }
-   
-    else {
-        led_mutex.lock();
-        red_v = 1.0f;
-        green_v = 0.0f;
-        blue_v = 0.0f;
-        led_mutex.unlock();
-    }
-    pc.printf("changing led color \n\rstate: %d\n\r", state_in);
-    pc.printf("red_v = %f\n\r", red_v);
-    pc.printf("green_v = %f\n\r", green_v);
-    pc.printf("blue_v = %f\n\r", blue_v);
-}
-
-
-void change_state (int new_state) {
-   
-    state = new_state;
-    set_led_color(state);
-       
-}
-
 void pb1_hit_callback (void) {
    armed = true;
-   led1 = 1;
-   running = 1;
-   set_time(0);
-   change_state(2);
+   led1 = 1;  
+    running = 1;
+    set_time(0);
+   
+    lcdmut.lock();
+    red_v = 1.0f;
+    green_v = 0.0f;
+    blue_v = 0.0f;
+   lcdmut.unlock();
 }
 
 void pb2_hit_callback (void) {
@@ -110,9 +61,14 @@ void pb2_hit_callback (void) {
     still = false;
     led1 = 0;
     led2 = 0;
+   
+    lcdmut.lock();
     running = 0;
     fresh = 0;
-    change_state(0);
+    red_v = 0.0f;
+    green_v = 1.0f;
+    blue_v = 0.0f;
+    lcdmut.unlock();
 }
 
 void checkFinished(){
@@ -140,9 +96,17 @@ void checkFinished(){
                   led2 = 1;
                   still = false;
                   armed = false;
+                 
+                  lcdmut.lock();
                   running = 0;
                   fresh = 0;
-                  change_state(1);
+                  //set_led_color(1);
+                  //change_state(1);
+                  red_v = 0.0f;
+                  green_v = 0.0f;
+                  blue_v = 1.0f;
+                  lcdmut.unlock();
+                   
             }
         }
     }
@@ -182,11 +146,11 @@ void led_thread_func (void) {
    
     while (1) {
        
-        led_mutex.lock();
+        //lcdmut.lock();
         red = red_v;
         green = green_v;
         blue = blue_v;
-        led_mutex.unlock();
+        //lcdmut.lock();
        
         Thread::wait(1000);
        
@@ -200,61 +164,33 @@ void led_thread_func (void) {
 }    
 
 int main() {
-    ////LSM9DS1 lol(p9, p10, 0x6B, 0x1E);
-    //LSM9DS1 lol(p9, p10, 0xD6, 0x3C);
-    lol.begin();
-    if (!lol.begin()) {
-        pc.printf("Failed to communicate with LSM9DS1.\n");
-    }
-    lol.calibrate();
-   
-pb1.mode(PullUp);
-pb2.mode(PullUp);
-wait(.001);
-   
-pb1.attach_deasserted(&pb1_hit_callback);
-pb2.attach_deasserted(&pb2_hit_callback);
 
-pb1.setSampleFrequency();
-pb2.setSampleFrequency();
-wait(.001);
-
-uLCD.text_height(1);
-uLCD.text_width(1);
-wait(0.01);
-
-uLCD.text_string("Status:",2, 2, FONT_7X8, WHITE);
-
-thread1.start(checkFinished);
-thread2.start(lcdupdate);
-led_thread.start(led_thread_func);
-   
-    //while(1) {
-
-        //lol.readGyro();
-//        //pc.printf("X: %d Y:%d\n\r", lol.gx, lol.gy);
-//        int x = abs(lol.gx);
-//        int y = abs(lol.gy);
-//        pc.printf("X: %d Y:%d\n\r", x, y);
-//        
-//        if(x <= 50 && y <=50 && armed == true){
-//            pc.printf("still");
-//            wait(15);
-//            still = true;
-//        }
-//        
-//        lol.readGyro();
-//        x = abs(lol.gx);
-//        y = abs(lol.gy);
-//        pc.printf("X: %d Y:%d\n\r", x, y);
-//        
-//        if(still == true && x <= 50 && y <=50 ){
-//              led2 = 1;
-//              still = false;
-//              armed = false;
-//        }
-//        
-//        wait(1);
+        lol.begin();
+        if (!lol.begin()) {
+            pc.printf("Failed to communicate with LSM9DS1.\n");
+        }
+        lol.calibrate();
        
-    //}
+    pb1.mode(PullUp);
+    pb2.mode(PullUp);
+    wait(.001);
+       
+    pb1.attach_deasserted(&pb1_hit_callback);
+    pb2.attach_deasserted(&pb2_hit_callback);
+   
+    pb1.setSampleFrequency();
+    pb2.setSampleFrequency();
+    wait(.001);
+   
+    uLCD.text_height(1);
+    uLCD.text_width(1);
+    wait(0.01);
+   
+    uLCD.text_string("Status:",2, 2, FONT_7X8, WHITE);
+   
+    thread1.start(checkFinished);
+    thread2.start(lcdupdate);
+    led_thread.start(led_thread_func);
+   
+
 }
