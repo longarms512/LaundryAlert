@@ -19,6 +19,8 @@ PwmOut red(p21); // led out on pin 21 - blue
 PwmOut green(p22); // led out on pin 22 - green
 PwmOut blue(p23); // led out on pin 23 - red
 
+DigitalOut Email(p20);
+
 bool still = false;
 bool armed = false;
 int counter = 0;
@@ -63,6 +65,7 @@ void pb2_hit_callback(void) {
 	led1 = 0;
 	led2 = 0;
 	counter = 0;
+	Email = 0;
 
 	lcdmut.lock();
 	running = 0;
@@ -116,7 +119,10 @@ void checkFinished() {
 				led2 = 1;
 				still = false;
 				armed = false;
-
+				Email = 1;
+				pc.printf("email sent \n\r");
+				Thread::wait(500);
+				Email = 0;
 				lcdmut.lock();
 				running = 0;
 				fresh = 0;
@@ -126,6 +132,7 @@ void checkFinished() {
 				green_v = 0.0f;
 				blue_v = 1.0f;
 				lcdmut.unlock();
+
 
 			}
 		}
@@ -190,6 +197,8 @@ int main() {
 		pc.printf("Failed to communicate with LSM9DS1.\n");
 	}
 	lol.calibrate();
+
+	Email = 0;
 
 	pb1.mode(PullUp);
 	pb2.mode(PullUp);
